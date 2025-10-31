@@ -94,6 +94,35 @@ async def _fetch_menu_map(codes: Set[str]) -> Dict[str, Dict[str, Any]]:
         return {}
 
 
+async def create_user(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """사용자를 생성하고 생성된 레코드를 반환한다."""
+
+    insertion = {
+        "user_id": payload["user_id"],
+        "password": payload["password"],
+        "user_name": payload["user_name"],
+        "email": payload.get("email"),
+        "role": payload.get("role") or "user",
+        "ip_address": payload.get("ip_address"),
+        "login_status": payload.get("login_status") or "offline",
+        "created_by": payload.get("created_by") or "system",
+        "updated_by": payload.get("updated_by"),
+    }
+    
+    print("Creating user with payload:", insertion)  # Debug statement
+
+    def _insert():
+        return supabase.table("admin_users").insert(insertion).execute()
+
+    response = await asyncio.to_thread(_insert)
+
+    if getattr(response, "error", None):
+        raise ValueError(response.error.message if hasattr(response.error, "message") else str(response.error))
+
+    data = response.data or []
+    return data[0] if data else insertion
+
+
 async def _fetch_user_map(user_ids: Set[str]) -> Dict[str, Dict[str, Any]]:
     def _query():
         query = supabase.table("admin_users").select("user_id, user_name")
