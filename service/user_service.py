@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Set
 
 from setting.supabase_client import supabase
@@ -109,8 +109,6 @@ async def create_user(payload: Dict[str, Any]) -> Dict[str, Any]:
         "updated_by": payload.get("updated_by"),
     }
     
-    print("Creating user with payload:", insertion)  # Debug statement
-
     def _insert():
         return supabase.table("admin_users").insert(insertion).execute()
 
@@ -133,3 +131,65 @@ async def _fetch_user_map(user_ids: Set[str]) -> Dict[str, Dict[str, Any]]:
         return {item["user_id"]: item for item in (response.data or []) if item.get("user_id")}
     except Exception:  # pylint: disable=broad-except
         return {}
+
+async def fetch_weekly_login_stats() -> Dict[str, Any]:
+    """이번 주와 지난 주의 로그인 성공 횟수를 비교한다."""
+    now = datetime.now(timezone.utc)
+    start_today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    start_this_week = start_today - timedelta(days=start_today.weekday())
+    start_next_week = start_this_week + timedelta(days=7)
+    start_last_week = start_this_week - timedelta(days=7)
+
+    this_week = await _count_success_logins(start_this_week, start_next_week)
+    last_week = await _count_success_logins(start_last_week, start_this_week)
+
+    diff = this_week - last_week
+
+    if last_week > 0:
+        diff_percent = round((diff / last_week) * 100, 1)
+    else:
+        diff_percent = 100.0 if this_week > 0 else 0.0
+
+    trend = "flat"
+    if diff > 0:
+        trend = "up"
+    elif diff < 0:
+        trend = "down"
+
+    return {
+        "this_week": this_week,
+        "last_week": last_week,
+        "diff": diff,
+        "diff_percent": diff_percent,
+        "trend": trend,
+        "week_start": start_this_week.date().isoformat(),
+        "week_end": (start_next_week - timedelta(seconds=1)).date().isoformat(),
+    }
+
+
+async def _count_success_logins(start: datetime, end: datetime) -> int:
+    iso_start = start.isoformat()
+    iso_end = end.isoformat()
+
+    def _query():
+        return (
+            supabase
+            .table("admin_user_history")
+            .select("menu_code", count="exact")
+            .eq("menu_code", "login")
+            .eq("result_status", "success")
+            .gte("created_at", iso_start)
+            .lt("created_at", iso_end)
+            .execute()
+        )
+
+    response = await asyncio.to_thread(_query)
+
+    if getattr(response, "error", None):
+        raise ValueError(response.error.message if hasattr(response.error, "message") else str(response.error))
+
+    if response.count is not None:
+        return response.count
+
+    return len(response.data or [])
+

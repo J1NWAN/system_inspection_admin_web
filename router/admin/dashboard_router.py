@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from setting.supabase_client import supabase
+from service.user_service import fetch_weekly_login_stats
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -22,22 +23,32 @@ async def redirect_to_dashboard() -> RedirectResponse:
 
 @router.get("/dashboard", response_class=HTMLResponse, name="admin_dashboard")
 async def admin_dashboard(request: Request):
+    logs = []
+    status_error = None
+    weekly_stats = None
+    weekly_stats_error = None
+
     try:
         response = await asyncio.to_thread(
             lambda: supabase.table("status_logs").select("*").order("created_at", desc=True).limit(5).execute()
         )
         logs = response.data
-        error = None
     except Exception as exc:  # pylint: disable=broad-except
-        logs = []
-        error = str(exc)
+        status_error = str(exc)
+
+    try:
+        weekly_stats = await fetch_weekly_login_stats()
+    except Exception as exc:  # pylint: disable=broad-except
+        weekly_stats_error = str(exc)
 
     return templates.TemplateResponse(
         "admin/dashboard.html",
         {
             "request": request,
             "supabase_logs": logs,
-            "supabase_error": error,
+            "supabase_error": status_error,
+            "weekly_login_stats": weekly_stats,
+            "weekly_login_stats_error": weekly_stats_error,
         },
     )
 
