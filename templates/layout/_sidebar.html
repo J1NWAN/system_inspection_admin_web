@@ -1,0 +1,63 @@
+{% set menu_tree = request.state.menu_tree if request.state else [] %}
+{% set menu_error = request.state.menu_error if request.state else None %}
+
+{% macro render_menu(nodes) -%}
+  {%- for node in nodes %}
+    {%- set has_children = node.children | length > 0 %}
+    {%- set icon_class = node.icon_class if node.icon_class else 'bi-dot' %}
+    {%- set code = node.menu_code if node.menu_code is not none else 'node-' ~ loop.index %}
+    {%- set collapse_id = ('menu-' ~ code)|replace(' ', '-')|lower %}
+    {%- set expanded = node.is_active or node.has_active_child %}
+    <li class="nav-item">
+      {% if has_children %}
+        <a
+          class="nav-link d-flex align-items-center{% if expanded %} active{% endif %}"
+          href="#"
+          data-bs-toggle="collapse"
+          data-bs-target="#{{ collapse_id }}"
+          aria-expanded="{{ 'true' if expanded else 'false' }}"
+        >
+          <i class="bi {{ icon_class }}"></i>
+          <span>{{ node.menu_name }}</span>
+          <i class="bi bi-chevron-down ms-auto"></i>
+        </a>
+        <div class="collapse{% if expanded %} show{% endif %}" id="{{ collapse_id }}">
+          <ul class="nav nav-submenu">
+            {{ render_menu(node.children) }}
+          </ul>
+        </div>
+      {% else %}
+        <a
+          class="nav-link d-flex align-items-center{% if node.is_active %} active{% endif %}"
+          href="{{ node.menu_path or '#' }}"
+        >
+          <i class="bi {{ icon_class }}"></i>
+          <span>{{ node.menu_name }}</span>
+        </a>
+      {% endif %}
+    </li>
+  {%- endfor %}
+{%- endmacro %}
+
+<aside class="admin-sidebar" id="admin-sidebar">
+  <div class="sidebar-content">
+    <nav class="sidebar-nav">
+      <ul class="nav flex-column">
+        {% if menu_error %}
+          <li class="nav-item px-3">
+            <div class="alert alert-danger mb-0" role="alert">
+              <!-- Supabase 조회 중 오류 발생 -->
+              메뉴 정보를 불러오는 중 오류가 발생했습니다: {{ menu_error }}
+            </div>
+          </li>
+        {% elif menu_tree %}
+          {{ render_menu(menu_tree) }}
+        {% else %}
+          <li class="nav-item px-3">
+            <small class="text-muted">등록된 메뉴가 없습니다.</small>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+</aside>

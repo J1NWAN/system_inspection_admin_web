@@ -1,0 +1,274 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+  <div class="row g-4 mb-4">
+    <div class="col-xl-3 col-lg-6">
+      <div class="card stats-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-people"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="mb-0 text-muted">Total Users</h6>
+              <h3 class="mb-0">12,426</h3>
+              <small class="text-success">
+                <i class="bi bi-arrow-up"></i> +12.5%
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-lg-6">
+      <div class="card stats-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="stats-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-graph-up"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="mb-0 text-muted">Monthly Revenue</h6>
+              <h3 class="mb-0">$54,320</h3>
+              <small class="text-success">
+                <i class="bi bi-arrow-up"></i> +8.2%
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-lg-6">
+      <div class="card stats-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-bag-check"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="mb-0 text-muted">Orders</h6>
+              <h3 class="mb-0">1,852</h3>
+              <small class="text-warning">
+                <i class="bi bi-arrow-up"></i> +3.4%
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-3 col-lg-6">
+      <div class="card stats-card">
+        <div class="card-body">
+          <div class="d-flex align-items-center">
+            <div class="flex-shrink-0">
+              <div class="stats-icon bg-info bg-opacity-10 text-info">
+                <i class="bi bi-life-preserver"></i>
+              </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+              <h6 class="mb-0 text-muted">Support Tickets</h6>
+              <h3 class="mb-0">86</h3>
+              <small class="text-success">
+                <i class="bi bi-check"></i> 94% resolved
+              </small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-xl-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title mb-0">Revenue Overview</h5>
+            <small class="text-muted">Quarterly performance overview</small>
+          </div>
+          <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-primary active">7D</button>
+            <button type="button" class="btn btn-outline-primary">30D</button>
+            <button type="button" class="btn btn-outline-primary">90D</button>
+            <button type="button" class="btn btn-outline-primary">1Y</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="border rounded-3 p-3 h-100">
+                <h6 class="text-muted">Top Products</h6>
+                <ul class="list-unstyled mb-0">
+                  <li class="d-flex align-items-center justify-content-between py-2">
+                    <span><i class="bi bi-laptop me-2 text-primary"></i>Metis Pro</span>
+                    <span class="fw-semibold">$45,320</span>
+                  </li>
+                  <li class="d-flex align-items-center justify-content-between py-2">
+                    <span><i class="bi bi-phone me-2 text-success"></i>Metis Mobile</span>
+                    <span class="fw-semibold">$32,180</span>
+                  </li>
+                  <li class="d-flex align-items-center justify-content-between py-2">
+                    <span><i class="bi bi-cloud me-2 text-info"></i>Metis Cloud</span>
+                    <span class="fw-semibold">$21,640</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="border rounded-3 p-3 h-100">
+                <h6 class="text-muted">Regional Growth</h6>
+                <ul class="list-unstyled mb-0">
+                  <li class="py-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span>North America</span>
+                      <span class="fw-semibold text-success">+14%</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                      <div class="progress-bar bg-success" style="width: 68%;"></div>
+                    </div>
+                  </li>
+                  <li class="py-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span>Europe</span>
+                      <span class="fw-semibold text-primary">+9%</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                      <div class="progress-bar bg-primary" style="width: 54%;"></div>
+                    </div>
+                  </li>
+                  <li class="py-2">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <span>Asia-Pacific</span>
+                      <span class="fw-semibold text-warning">+6%</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 6px;">
+                      <div class="progress-bar bg-warning" style="width: 38%;"></div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Team Activity</h5>
+          <small class="text-muted">Latest updates across teams</small>
+        </div>
+        <div class="card-body">
+          <div class="activity-feed">
+            <div class="activity-item">
+              <div class="activity-icon bg-primary bg-opacity-10 text-primary">
+                <i class="bi bi-person-plus"></i>
+              </div>
+              <div class="activity-content">
+                <p class="mb-1">New user registered</p>
+                <small class="text-muted">2 minutes ago</small>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon bg-success bg-opacity-10 text-success">
+                <i class="bi bi-bag-check"></i>
+              </div>
+              <div class="activity-content">
+                <p class="mb-1">Order #1234 completed</p>
+                <small class="text-muted">5 minutes ago</small>
+              </div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon bg-warning bg-opacity-10 text-warning">
+                <i class="bi bi-exclamation-triangle"></i>
+              </div>
+              <div class="activity-content">
+                <p class="mb-1">Server maintenance scheduled</p>
+                <small class="text-muted">1 hour ago</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <div>
+        <h5 class="card-title mb-0">Recent Transactions</h5>
+        <small class="text-muted">Last 10 customer payments</small>
+      </div>
+      <a class="btn btn-outline-secondary btn-sm" href="#">
+        View All
+        <i class="bi bi-chevron-right ms-1"></i>
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">Customer</th>
+            <th scope="col">Product</th>
+            <th scope="col">Amount</th>
+            <th scope="col">Status</th>
+            <th scope="col">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <img src="{{ url_for('static', path='image/avatar-placeholder.svg') }}" alt="" width="32" height="32" class="rounded-circle" />
+                <div>
+                  <span class="fw-semibold d-block">Ava Collins</span>
+                  <small class="text-muted">ava.collins@example.com</small>
+                </div>
+              </div>
+            </td>
+            <td>Metis Pro</td>
+            <td>$1,299</td>
+            <td><span class="badge bg-success-subtle text-success">Completed</span></td>
+            <td>Apr 18, 2024</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <img src="{{ url_for('static', path='image/avatar-placeholder.svg') }}" alt="" width="32" height="32" class="rounded-circle" />
+                <div>
+                  <span class="fw-semibold d-block">Marcus West</span>
+                  <small class="text-muted">marcus.west@example.com</small>
+                </div>
+              </div>
+            </td>
+            <td>Metis Mobile</td>
+            <td>$899</td>
+            <td><span class="badge bg-warning-subtle text-warning">Pending</span></td>
+            <td>Apr 17, 2024</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <img src="{{ url_for('static', path='image/avatar-placeholder.svg') }}" alt="" width="32" height="32" class="rounded-circle" />
+                <div>
+                  <span class="fw-semibold d-block">Helena Stone</span>
+                  <small class="text-muted">helena.stone@example.com</small>
+                </div>
+              </div>
+            </td>
+            <td>Metis Cloud</td>
+            <td>$2,499</td>
+            <td><span class="badge bg-danger-subtle text-danger">Failed</span></td>
+            <td>Apr 16, 2024</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
