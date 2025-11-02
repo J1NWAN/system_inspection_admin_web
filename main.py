@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from router import dashboard_router, sample_router, user_router
+from router import dashboard_router, sample_router, user_router, system_router
 from service.menu_service import fetch_menu_tree
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -16,6 +16,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 app.include_router(sample_router)
 app.include_router(dashboard_router)
 app.include_router(user_router)
+app.include_router(system_router)
 
 
 @app.middleware("http")

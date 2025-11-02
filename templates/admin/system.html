@@ -1,0 +1,316 @@
+{% extends "layout/base.html" %}
+
+{% block extra_head %}
+  {{ super() }}
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+{% endblock %}
+
+{% block page_header %}
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">시스템 관리</h1>
+        <p class="text-muted mb-0">점검할 시스템의 정보를 등록하거나 수정합니다.</p>
+    </div>
+</div>
+
+<!-- System Manager -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0 mt-3">
+                    <i class="bi bi-postage me-2 text-primary"></i>
+                    시스템 정보 입력
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="system-error" class="alert alert-danger d-none" role="alert"></div>
+                <div id="system-success" class="alert alert-success d-none" role="alert"></div>
+                <form id="system-form" method="post">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group floating-label">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="system_code"
+                                    id="system-code"
+                                    placeholder=" "
+                                    required
+                                >
+                                <label class="form-label">시스템 코드</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group floating-label">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="system_name"
+                                    id="system-name"
+                                    placeholder=" "
+                                    required
+                                >
+                                <label class="form-label">시스템명</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group floating-label">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="domain"
+                                    id="system-domain"
+                                    placeholder=" "
+                                    required
+                                >
+                                <label class="form-label">도메인</label>
+                            </div>
+                        </div>
+                        <div class="col-12 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" id="system-submit-btn">
+                                <span>
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <span id="system-submit-label">등록</span>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="system-reset-btn">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>새로 입력
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-title">시스템 목록</h6>
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">순번</th>
+                                <th scope="col">시스템코드</th>
+                                <th scope="col">시스템명</th>
+                                <th scope="col">도메인</th>
+                            </tr>
+                        </thead>
+                        <tbody id="system-table-body">
+                            {% if system_list %}
+                                {% for system in system_list %}
+                                <tr
+                                    class="system-row"
+                                    data-system-code="{{ system.system_code }}"
+                                    data-system-name="{{ system.system_name }}"
+                                    data-domain="{{ system.domain }}"
+                                    style="cursor: pointer;"
+                                >
+                                    <th scope="row">{{ loop.index }}</th>
+                                    <td>{{ system.system_code }}</td>
+                                    <td>{{ system.system_name }}</td>
+                                    <td>{{ system.domain }}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr data-empty="true">
+                                    <td colspan="4" class="text-center text-muted py-4">등록된 시스템이 없습니다.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+  {{ super() }}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('system-form');
+      if (!form) return;
+
+      const codeInput = document.getElementById('system-code');
+      const nameInput = document.getElementById('system-name');
+      const domainInput = document.getElementById('system-domain');
+      const submitBtn = document.getElementById('system-submit-btn');
+      const submitLabel = document.getElementById('system-submit-label');
+      const resetBtn = document.getElementById('system-reset-btn');
+      const tableBody = document.getElementById('system-table-body');
+      const successAlert = document.getElementById('system-success');
+      const errorAlert = document.getElementById('system-error');
+
+      let editMode = false;
+      let selectedRow = null;
+
+      const hideAlerts = () => {
+        [successAlert, errorAlert].forEach((el) => {
+          if (el) {
+            el.classList.add('d-none');
+            el.textContent = '';
+          }
+        });
+      };
+
+      const showAlert = (element, message) => {
+        if (!element) return;
+        element.textContent = message;
+        element.classList.remove('d-none');
+      };
+
+      const refreshRowNumbering = () => {
+        if (!tableBody) return;
+        Array.from(tableBody.querySelectorAll('tr[data-system-code]')).forEach((row, index) => {
+          const cell = row.querySelector('th');
+          if (cell) {
+            cell.textContent = String(index + 1);
+          }
+        });
+      };
+
+      const clearSelection = () => {
+        if (selectedRow) {
+          selectedRow.classList.remove('table-primary');
+        }
+        selectedRow = null;
+      };
+
+      const resetFormState = () => {
+        hideAlerts();
+        form.reset();
+        clearSelection();
+        editMode = false;
+        codeInput.removeAttribute('disabled');
+        submitLabel.textContent = '등록';
+      };
+
+      const selectRow = (row) => {
+        if (!row) return;
+        hideAlerts();
+        const { systemCode, systemName, domain } = row.dataset;
+        codeInput.value = systemCode || '';
+        nameInput.value = systemName || '';
+        domainInput.value = domain || '';
+        editMode = true;
+        codeInput.setAttribute('disabled', 'disabled');
+        submitLabel.textContent = '수정';
+        clearSelection();
+        row.classList.add('table-primary');
+        selectedRow = row;
+      };
+
+      const attachRowHandler = (row) => {
+        row.addEventListener('click', () => selectRow(row));
+      };
+
+      if (tableBody) {
+        Array.from(tableBody.querySelectorAll('tr[data-system-code]')).forEach(attachRowHandler);
+      }
+
+      const upsertRow = (system) => {
+        if (!tableBody) return null;
+        const { system_code: systemCode, system_name: systemName, domain } = system;
+        const emptyRow = tableBody.querySelector('tr[data-empty="true"]');
+        if (emptyRow) {
+          emptyRow.remove();
+        }
+        let row = tableBody.querySelector(`tr[data-system-code="${CSS.escape(systemCode)}"]`);
+
+        if (!row) {
+          row = document.createElement('tr');
+          row.className = 'system-row';
+          row.style.cursor = 'pointer';
+          row.innerHTML = `
+            <th scope="row"></th>
+            <td></td>
+            <td></td>
+            <td></td>
+          `;
+          tableBody.prepend(row);
+          attachRowHandler(row);
+        }
+
+        row.dataset.systemCode = systemCode;
+        row.dataset.systemName = systemName || '';
+        row.dataset.domain = domain || '';
+
+        const cells = row.querySelectorAll('td, th');
+        if (cells[1]) cells[1].textContent = systemCode;
+        if (cells[2]) cells[2].textContent = systemName || '';
+        if (cells[3]) cells[3].textContent = domain || '';
+
+        refreshRowNumbering();
+        return row;
+      };
+
+      if (resetBtn) {
+        resetBtn.addEventListener('click', resetFormState);
+      }
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        hideAlerts();
+
+        const payload = {
+          system_code: codeInput.value.trim(),
+          system_name: nameInput.value.trim(),
+          domain: domainInput.value.trim(),
+        };
+
+        if (!payload.system_code || !payload.system_name || !payload.domain) {
+          showAlert(errorAlert, '모든 필드를 입력해 주세요.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+
+        const identifier = selectedRow?.dataset.systemCode || payload.system_code;
+        const url = editMode
+          ? `/admin/system/${encodeURIComponent(identifier)}`
+          : '/admin/system';
+        const method = editMode ? 'PUT' : 'POST';
+
+        try {
+          const response = await fetch(url, {
+            method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok || result.ok === false) {
+            const message = result.detail || result.error || result.message || '저장 중 오류가 발생했습니다.';
+            throw new Error(message);
+          }
+
+          const saved = result.data || payload;
+          const row = upsertRow(saved);
+
+          if (editMode && row) {
+            selectRow(row);
+            showAlert(successAlert, '시스템 정보가 수정되었습니다.');
+          } else {
+            resetFormState();
+            showAlert(successAlert, '시스템이 등록되었습니다.');
+          }
+        } catch (error) {
+          showAlert(errorAlert, error.message || '요청 처리 중 문제가 발생했습니다.');
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    });
+  </script>
+{% endblock %}
