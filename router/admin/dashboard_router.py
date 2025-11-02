@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from setting.supabase_client import supabase
-from service.user_service import fetch_weekly_login_stats
+from service.dashboard_service import fetch_weekly_login_stats, fetch_inspection_systems_count, fetch_inspection_system_menus_count, fetch_today_inspection_error_count
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -25,8 +25,18 @@ async def redirect_to_dashboard() -> RedirectResponse:
 async def admin_dashboard(request: Request):
     logs = []
     status_error = None
+    
     weekly_stats = None
     weekly_stats_error = None
+    
+    systems_count = None
+    systems_count_error = None
+    
+    menus_count = None
+    menus_count_error = None
+    
+    inspection_error_count = None
+    inspection_error_count_error = None
 
     try:
         response = await asyncio.to_thread(
@@ -41,6 +51,21 @@ async def admin_dashboard(request: Request):
     except Exception as exc:  # pylint: disable=broad-except
         weekly_stats_error = str(exc)
 
+    try:
+        systems_count = await fetch_inspection_systems_count()
+    except Exception as exc:  # pylint: disable=broad-except
+        systems_count_error = str(exc)
+
+    try:
+        menus_count = await fetch_inspection_system_menus_count()
+    except Exception as exc:  # pylint: disable=broad-except
+        menus_count_error = str(exc)
+
+    try:
+        inspection_error_count = await fetch_today_inspection_error_count()
+    except Exception as exc:  # pylint: disable=broad-except
+        inspection_error_count_error = str(exc)
+
     return templates.TemplateResponse(
         "admin/dashboard.html",
         {
@@ -49,6 +74,12 @@ async def admin_dashboard(request: Request):
             "supabase_error": status_error,
             "weekly_login_stats": weekly_stats,
             "weekly_login_stats_error": weekly_stats_error,
+            "systems_count": systems_count,
+            "systems_count_error": systems_count_error,
+            "menus_count": menus_count,
+            "menus_count_error": menus_count_error,
+            "inspection_error_count": inspection_error_count,
+            "inspection_error_count_error": inspection_error_count_error,
         },
     )
 

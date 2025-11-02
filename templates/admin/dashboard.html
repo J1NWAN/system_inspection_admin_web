@@ -60,7 +60,7 @@
             </div>
             <div class="flex-grow-1 ms-3">
               <h6 class="mb-0 text-muted">등록된 시스템 수</h6>
-              <h3 class="mb-0">$54,320</h3>
+              <h3 class="mb-0">{{systems_count}}</h3>
               <small class="text-success">
                 <i class="bi bi-postage"></i> +8.2%
               </small>
@@ -80,7 +80,7 @@
             </div>
             <div class="flex-grow-1 ms-3">
               <h6 class="mb-0 text-muted">등록된 메뉴 수</h6>
-              <h3 class="mb-0">1,852</h3>
+              <h3 class="mb-0">{{menus_count}}</h3>
               <small class="text-success">
                 <i class="bi bi-arrow-up"></i> +3.4%
               </small>
@@ -100,10 +100,16 @@
             </div>
             <div class="flex-grow-1 ms-3">
               <h6 class="mb-0 text-muted">금일 오류 발생 수</h6>
-              <h3 class="mb-0">86</h3>
-              <small class="text-danger">
-                <i class="bi bi-check"></i> 94% resolved
+              <h3 class="mb-0">{{inspection_error_count}}</h3>
+              {% if inspection_error_count == 0 %}
+              <small class="text-success">
+                <i class="bi bi-check"></i> 발견된 오류가 없습니다
               </small>
+              {% else %}
+              <small class="text-danger">
+                <i class="bi bi-check"></i> 오류가 발생했습니다.
+              </small>
+              {% endif %}              
             </div>
           </div>
         </div>
