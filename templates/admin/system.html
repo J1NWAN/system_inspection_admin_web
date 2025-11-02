@@ -17,6 +17,9 @@
     </div>
 </div>
 
+<div id="system-error" class="alert alert-danger d-none" role="alert"></div>
+<div id="system-success" class="alert alert-success d-none" role="alert"></div>
+
 <!-- System Manager -->
 <div class="row g-4 mb-5">
     <div class="col-lg-6">
@@ -27,9 +30,8 @@
                     시스템 정보 입력
                 </h5>
             </div>
+
             <div class="card-body">
-                <div id="system-error" class="alert alert-danger d-none" role="alert"></div>
-                <div id="system-success" class="alert alert-success d-none" role="alert"></div>
                 <form id="system-form" method="post">
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -78,8 +80,8 @@
                                     <span id="system-submit-label">등록</span>
                                 </span>
                             </button>
-                            <button type="button" class="btn btn-outline-secondary" id="system-reset-btn">
-                                <i class="bi bi-arrow-counterclockwise me-2"></i>새로 입력
+                            <button type="button" class="btn btn-outline-danger d-none" id="system-delete-btn">
+                                <i class="bi bi-trash3 me-2"></i>삭제
                             </button>
                         </div>
                     </div>
@@ -91,14 +93,15 @@
         <div class="card h-100">
             <div class="card-body">
                 <h6 class="card-title">시스템 목록</h6>
-                <div style="max-height: 250px; overflow-y: auto;">
-                    <table class="table table-hover">
-                        <thead>
+                <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
                             <tr>
                                 <th scope="col">순번</th>
                                 <th scope="col">시스템코드</th>
                                 <th scope="col">시스템명</th>
                                 <th scope="col">도메인</th>
+                                <th scope="col" class="text-center" style="width: 80px;">관리</th>
                             </tr>
                         </thead>
                         <tbody id="system-table-body">
@@ -115,13 +118,59 @@
                                     <td>{{ system.system_code }}</td>
                                     <td>{{ system.system_name }}</td>
                                     <td>{{ system.domain }}</td>
+                                    <td class="text-center">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" 
+                                                    data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="edit">
+                                                    <i class="bi bi-pencil me-2"></i>수정
+                                                </a></li>
+                                                <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="refresh-menus">
+                                                    <i class="bi bi-arrow-repeat me-2"></i>메뉴 새로고침
+                                                </a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger system-dropdown-action" href="#" data-system-action="delete">
+                                                    <i class="bi bi-trash me-2"></i>삭제
+                                                </a></li>
+                                            </ul>
+                                        </div>
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr data-empty="true">
-                                    <td colspan="4" class="text-center text-muted py-4">등록된 시스템이 없습니다.</td>
+                                    <td colspan="5" class="text-center text-muted py-4">등록된 시스템이 없습니다.</td>
                                 </tr>
                             {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-12">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="card-title">시스템 메뉴 목록</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">순번</th>
+                                <th style="width: 160px;">시스템코드</th>
+                                <th>메뉴명</th>
+                                <th>경로</th>
+                                <th style="width: 180px;">생성일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="system-menu-table">
+                            <tr data-menu-message="true">
+                                <td colspan="5" class="text-center text-muted py-3">시스템을 선택하면 메뉴 목록이 표시됩니다.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -143,13 +192,15 @@
       const domainInput = document.getElementById('system-domain');
       const submitBtn = document.getElementById('system-submit-btn');
       const submitLabel = document.getElementById('system-submit-label');
-      const resetBtn = document.getElementById('system-reset-btn');
+      const deleteBtn = document.getElementById('system-delete-btn');
       const tableBody = document.getElementById('system-table-body');
+      const menuTableBody = document.getElementById('system-menu-table');
       const successAlert = document.getElementById('system-success');
       const errorAlert = document.getElementById('system-error');
 
       let editMode = false;
       let selectedRow = null;
+      let menuRequestId = 0;
 
       const hideAlerts = () => {
         [successAlert, errorAlert].forEach((el) => {
@@ -164,6 +215,92 @@
         if (!element) return;
         element.textContent = message;
         element.classList.remove('d-none');
+      };
+
+      const setMenuMessage = (message, tone = "muted") => {
+        if (!menuTableBody) return;
+        menuTableBody.innerHTML = `
+          <tr data-menu-message="true">
+            <td colspan="5" class="text-center text-${tone} py-3">${message}</td>
+          </tr>
+        `;
+      };
+
+      const clearMenus = () => {
+        setMenuMessage("시스템을 선택하면 메뉴 목록이 표시됩니다.");
+      };
+
+      const formatDate = (value) => {
+        if (!value) return "";
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+          return value;
+        }
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const dd = String(date.getDate()).padStart(2, "0");
+        const hh = String(date.getHours()).padStart(2, "0");
+        const min = String(date.getMinutes()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+      };
+
+      const renderMenus = (menus) => {
+        if (!menuTableBody) return;
+        if (!menus || menus.length === 0) {
+          setMenuMessage("등록된 메뉴가 없습니다.");
+          return;
+        }
+
+        menuTableBody.innerHTML = menus
+          .map((menu, index) => {
+            const systemCode = menu.system_code || "";
+            const menuName = menu.menu_name || "";
+            const path = menu.path || menu.menu_path || "";
+            const createdAt = formatDate(menu.created_at);
+            return `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${systemCode}</td>
+                <td>${menuName}</td>
+                <td>${path}</td>
+                <td>${createdAt}</td>
+              </tr>
+            `;
+          })
+          .join("");
+      };
+
+      const loadMenus = async (systemCode) => {
+        if (!menuTableBody || !systemCode) {
+          clearMenus();
+          return;
+        }
+
+        const requestId = ++menuRequestId;
+        setMenuMessage("메뉴를 불러오는 중입니다...", "info");
+
+        try {
+          const response = await fetch(`/admin/system/${encodeURIComponent(systemCode)}/menus`, {
+            headers: {
+              Accept: "application/json",
+            },
+          });
+
+          const result = await response.json().catch(() => ({}));
+
+          if (requestId !== menuRequestId) {
+            return;
+          }
+
+          if (!response.ok || result.ok === false) {
+            const message = result.detail || result.error || result.message || "메뉴 조회 중 오류가 발생했습니다.";
+            throw new Error(message);
+          }
+
+          renderMenus(result.data || []);
+        } catch (error) {
+          setMenuMessage(error.message || "메뉴 조회 중 문제가 발생했습니다.", "danger");
+        }
       };
 
       const refreshRowNumbering = () => {
@@ -188,11 +325,17 @@
         form.reset();
         clearSelection();
         editMode = false;
+        menuRequestId += 1;
         codeInput.removeAttribute('disabled');
         submitLabel.textContent = '등록';
+        if (deleteBtn) {
+          deleteBtn.classList.add('d-none');
+          deleteBtn.disabled = true;
+        }
+        clearMenus();
       };
 
-      const selectRow = (row) => {
+      const selectRow = (row, { skipMenuLoad = false } = {}) => {
         if (!row) return;
         hideAlerts();
         const { systemCode, systemName, domain } = row.dataset;
@@ -205,10 +348,22 @@
         clearSelection();
         row.classList.add('table-primary');
         selectedRow = row;
+        if (deleteBtn) {
+          deleteBtn.classList.remove('d-none');
+          deleteBtn.disabled = false;
+        }
+        if (!skipMenuLoad) {
+          loadMenus(systemCode);
+        }
       };
 
       const attachRowHandler = (row) => {
-        row.addEventListener('click', () => selectRow(row));
+        row.addEventListener('click', (event) => {
+          if (event.target.closest('.dropdown')) {
+            return;
+          }
+          selectRow(row);
+        });
       };
 
       if (tableBody) {
@@ -233,6 +388,25 @@
             <td></td>
             <td></td>
             <td></td>
+            <td class="text-center">
+              <div class="dropdown">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="bi bi-three-dots"></i>
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="edit">
+                    <i class="bi bi-pencil me-2"></i>수정
+                  </a></li>
+                  <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="refresh-menus">
+                    <i class="bi bi-arrow-repeat me-2"></i>메뉴 새로고침
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item text-danger system-dropdown-action" href="#" data-system-action="delete">
+                    <i class="bi bi-trash me-2"></i>삭제
+                  </a></li>
+                </ul>
+              </div>
+            </td>
           `;
           tableBody.prepend(row);
           attachRowHandler(row);
@@ -251,8 +425,107 @@
         return row;
       };
 
-      if (resetBtn) {
-        resetBtn.addEventListener('click', resetFormState);
+      resetFormState();
+
+      const removeRow = (systemCode) => {
+        if (!tableBody) return;
+        const row = tableBody.querySelector(`tr[data-system-code="${CSS.escape(systemCode)}"]`);
+        if (row) {
+          row.remove();
+          refreshRowNumbering();
+        }
+        if (!tableBody.querySelector('tr[data-system-code]')) {
+          const emptyRow = document.createElement('tr');
+          emptyRow.dataset.empty = 'true';
+          emptyRow.innerHTML = '<td colspan="5" class="text-center text-muted py-4">등록된 시스템이 없습니다.</td>';
+          tableBody.appendChild(emptyRow);
+        }
+      };
+
+      const handleDelete = async (systemCode, { skipConfirm = false } = {}) => {
+        if (!systemCode) return false;
+        hideAlerts();
+
+        if (!skipConfirm) {
+          const confirmed = window.confirm('정말로 이 시스템을 삭제하시겠습니까?');
+          if (!confirmed) {
+            return false;
+          }
+        }
+
+        submitBtn.disabled = true;
+        if (deleteBtn && !deleteBtn.classList.contains('d-none')) {
+          deleteBtn.disabled = true;
+        }
+
+        try {
+          const response = await fetch(`/admin/system/${encodeURIComponent(systemCode)}`, {
+            method: 'DELETE',
+            headers: {
+              'Accept': 'application/json',
+            },
+          });
+
+          const result = await response.json().catch(() => ({}));
+
+          if (!response.ok || result.ok === false) {
+            const message = result.detail || result.error || result.message || '삭제 중 오류가 발생했습니다.';
+            throw new Error(message);
+          }
+
+          removeRow(systemCode);
+          resetFormState();
+          showAlert(successAlert, '시스템이 삭제되었습니다.');
+          return true;
+        } catch (error) {
+          showAlert(errorAlert, error.message || '요청 처리 중 문제가 발생했습니다.');
+          return false;
+        } finally {
+          submitBtn.disabled = false;
+          if (deleteBtn) {
+            deleteBtn.disabled = deleteBtn.classList.contains('d-none');
+          }
+        }
+      };
+
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+          if (!editMode || !selectedRow) return;
+          const systemCode = selectedRow.dataset.systemCode;
+          if (!systemCode) return;
+          await handleDelete(systemCode);
+        });
+      }
+
+      if (tableBody) {
+        tableBody.addEventListener('click', async (event) => {
+          const actionEl = event.target.closest('.system-dropdown-action');
+          if (!actionEl) {
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+
+          const row = actionEl.closest('tr[data-system-code]');
+          if (!row) return;
+
+          const action = actionEl.dataset.systemAction;
+          const systemCode = row.dataset.systemCode;
+          if (!systemCode) return;
+
+          if (action === 'edit') {
+            selectRow(row);
+            submitBtn.focus();
+          } else if (action === 'refresh-menus') {
+            selectRow(row, { skipMenuLoad: true });
+            setMenuMessage("메뉴를 새로 불러오는 중입니다...", "info");
+            loadMenus(systemCode);
+          } else if (action === 'delete') {
+            selectRow(row);
+            await handleDelete(systemCode);
+          }
+        });
       }
 
       form.addEventListener('submit', async (event) => {

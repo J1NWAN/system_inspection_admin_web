@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from service.system_service import create_system, fetch_systems, update_system
+from service.system_service import create_system, delete_system, fetch_system_menus, fetch_systems, update_system
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -70,3 +70,25 @@ async def admin_system_update(system_code: str, request: Request):
     except Exception as exc:  # pylint: disable=broad-except
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
     return JSONResponse({"ok": True, "data": system})
+
+
+@router.delete("/system/{system_code}", response_class=JSONResponse, name="admin_system_delete")
+async def admin_system_delete(system_code: str):
+    try:
+        await delete_system(system_code)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except Exception as exc:  # pylint: disable=broad-except
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+    return JSONResponse({"ok": True})
+
+
+@router.get("/system/{system_code}/menus", response_class=JSONResponse, name="admin_system_menus")
+async def admin_system_menus(system_code: str):
+    try:
+        menus = await fetch_system_menus(system_code)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:  # pylint: disable=broad-except
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+    return JSONResponse({"ok": True, "data": menus})

@@ -19,6 +19,27 @@ async def fetch_systems(limit: Optional[int] = None) -> List[Dict[str, Any]]:
     return response.data or []
 
 
+async def fetch_system_menus(system_code: str) -> List[Dict[str, Any]]:
+    """특정 시스템에 등록된 메뉴 목록을 조회한다."""
+
+    def _query():
+        return (
+            supabase.table("inspection_system_menus")
+            .select("*")
+            .eq("system_code", system_code)
+            .order("menu_name")
+            .execute()
+        )
+
+    response = await asyncio.to_thread(_query)
+
+    if getattr(response, "error", None):
+        message = response.error.message if hasattr(response.error, "message") else str(response.error)
+        raise ValueError(message)
+
+    return response.data or []
+
+
 async def create_system(payload: Dict[str, Any]) -> Dict[str, Any]:
     """새로운 점검 대상 시스템을 등록한다."""
 
@@ -77,3 +98,29 @@ async def update_system(system_code: str, payload: Dict[str, Any]) -> Dict[str, 
     if not data:
         raise ValueError("해당 시스템을 찾을 수 없습니다.")
     return data[0]
+
+
+async def delete_system(system_code: str) -> None:
+    """등록된 점검 대상 시스템 및 연결된 메뉴를 삭제한다."""
+
+    def _delete_menus():
+        return supabase.table("inspection_system_menus").delete().eq("system_code", system_code).execute()
+
+    menu_response = await asyncio.to_thread(_delete_menus)
+
+    if getattr(menu_response, "error", None):
+        message = menu_response.error.message if hasattr(menu_response.error, "message") else str(menu_response.error)
+        raise ValueError(message)
+
+    def _delete_system():
+        return supabase.table("inspection_systems").delete().eq("system_code", system_code).execute()
+
+    system_response = await asyncio.to_thread(_delete_system)
+
+    if getattr(system_response, "error", None):
+        message = system_response.error.message if hasattr(system_response.error, "message") else str(system_response.error)
+        raise ValueError(message)
+
+    data = system_response.data or []
+    if not data:
+        raise ValueError("해당 시스템을 찾을 수 없습니다.")
