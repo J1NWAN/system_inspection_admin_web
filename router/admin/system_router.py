@@ -1,13 +1,20 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from service.system_service import create_system, delete_system, fetch_system_menus, fetch_systems, update_system
+from service.system_service import (
+    collect_system_menus,
+    create_system,
+    delete_system,
+    fetch_system_menus,
+    fetch_systems,
+    update_system,
+)
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -92,3 +99,28 @@ async def admin_system_menus(system_code: str):
     except Exception as exc:  # pylint: disable=broad-except
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
     return JSONResponse({"ok": True, "data": menus})
+
+
+@router.post("/system/{system_code}/menus/collect", response_class=JSONResponse, name="admin_system_collect_menus")
+async def admin_system_collect_menus(system_code: str, request: Request):
+    created_by: Optional[str] = None
+    content_length = request.headers.get("content-length")
+    if content_length and content_length.isdigit() and int(content_length) > 0:
+        content_type = request.headers.get("content-type", "")
+        try:
+            if "application/json" in content_type:
+                payload = await request.json()
+            else:
+                payload = dict(await request.form())
+        except Exception:  # pylint: disable=broad-except
+            payload = {}
+        created_by = payload.get("created_by")
+
+    try:
+        result = await collect_system_menus(system_code, created_by=created_by)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:  # pylint: disable=broad-except
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc)) from exc
+
+    return JSONResponse({"ok": True, "data": result})

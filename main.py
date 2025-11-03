@@ -8,6 +8,13 @@ from fastapi.templating import Jinja2Templates
 from router import dashboard_router, sample_router, user_router, system_router
 from service.menu_service import fetch_menu_tree
 
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+)
+
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title="FastAPI Sample App")

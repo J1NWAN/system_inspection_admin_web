@@ -129,8 +129,8 @@
                                                 <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="edit">
                                                     <i class="bi bi-pencil me-2"></i>수정
                                                 </a></li>
-                                                <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="refresh-menus">
-                                                    <i class="bi bi-arrow-repeat me-2"></i>메뉴 새로고침
+                                                <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="collect-menus">
+                                                    <i class="bi bi-collection me-2"></i>메뉴 수집
                                                 </a></li>
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li><a class="dropdown-item text-danger system-dropdown-action" href="#" data-system-action="delete">
@@ -255,7 +255,7 @@
           .map((menu, index) => {
             const systemCode = menu.system_code || "";
             const menuName = menu.menu_name || "";
-            const path = menu.path || menu.menu_path || "";
+            const path = menu.menu_path || "";
             const createdAt = formatDate(menu.created_at);
             return `
               <tr>
@@ -300,6 +300,63 @@
           renderMenus(result.data || []);
         } catch (error) {
           setMenuMessage(error.message || "메뉴 조회 중 문제가 발생했습니다.", "danger");
+        }
+      };
+
+      const collectMenus = async (systemCode) => {
+        if (!menuTableBody || !systemCode) {
+          clearMenus();
+          return;
+        }
+
+        const requestId = ++menuRequestId;
+        setMenuMessage("메뉴를 수집하는 중입니다...", "info");
+        hideAlerts();
+        submitBtn.disabled = true;
+        if (deleteBtn && !deleteBtn.classList.contains('d-none')) {
+          deleteBtn.disabled = true;
+        }
+
+        try {
+          const response = await fetch(
+            `/admin/system/${encodeURIComponent(systemCode)}/menus/collect`,
+            {
+              method: 'POST',
+              headers: {
+                Accept: 'application/json',
+              },
+            },
+          );
+
+          const result = await response.json().catch(() => ({}));
+
+          if (requestId !== menuRequestId) {
+            return;
+          }
+
+          if (!response.ok || result.ok === false) {
+            const message = result.detail || result.error || result.message || '메뉴 수집 중 오류가 발생했습니다.';
+            throw new Error(message);
+          }
+
+          const menus = result.data?.menus || [];
+          console.log(menus);
+          renderMenus(menus);
+
+          const count = result.data?.summary?.count;
+          if (typeof count === 'number') {
+            showAlert(successAlert, `총 ${count}개의 메뉴를 수집했습니다.`);
+          } else {
+            showAlert(successAlert, '메뉴 수집이 완료되었습니다.');
+          }
+        } catch (error) {
+          setMenuMessage(error.message || '메뉴 수집 중 문제가 발생했습니다.', 'danger');
+          showAlert(errorAlert, error.message || '메뉴 수집 중 문제가 발생했습니다.');
+        } finally {
+          submitBtn.disabled = false;
+          if (deleteBtn) {
+            deleteBtn.disabled = deleteBtn.classList.contains('d-none');
+          }
         }
       };
 
@@ -397,8 +454,8 @@
                   <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="edit">
                     <i class="bi bi-pencil me-2"></i>수정
                   </a></li>
-                  <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="refresh-menus">
-                    <i class="bi bi-arrow-repeat me-2"></i>메뉴 새로고침
+                  <li><a class="dropdown-item system-dropdown-action" href="#" data-system-action="collect-menus">
+                    <i class="bi bi-collection me-2"></i>메뉴 수집
                   </a></li>
                   <li><hr class="dropdown-divider"></li>
                   <li><a class="dropdown-item text-danger system-dropdown-action" href="#" data-system-action="delete">
@@ -517,10 +574,9 @@
           if (action === 'edit') {
             selectRow(row);
             submitBtn.focus();
-          } else if (action === 'refresh-menus') {
+          } else if (action === 'collect-menus') {
             selectRow(row, { skipMenuLoad: true });
-            setMenuMessage("메뉴를 새로 불러오는 중입니다...", "info");
-            loadMenus(systemCode);
+            collectMenus(systemCode);
           } else if (action === 'delete') {
             selectRow(row);
             await handleDelete(systemCode);
